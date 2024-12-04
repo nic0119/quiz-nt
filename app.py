@@ -1,32 +1,40 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import os
 from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
-
+# Chargement des variables d'environnement
 load_dotenv()
+
 # Initialisation de l'application Flask
 app = Flask(__name__)
+
+# Vérification des variables nécessaires
+if not app.config['SQLALCHEMY_DATABASE_URI']:
+    raise RuntimeError("La variable d'environnement SQLALCHEMY_DATABASE_URI n'est pas définie.")
+if not os.getenv("AZURE_STORAGE_CONNECTION_STRING"):
+    raise RuntimeError("La variable d'environnement AZURE_STORAGE_CONNECTION_STRING n'est pas définie.")
 
 # Configuration de l'application Flask
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'my_secret_key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_secret_key')
 
 # Configuration pour l'upload des fichiers
 UPLOAD_FOLDER = 'static/images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Crée le dossier si inexistant
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Configuration environnement azure
+# Configuration Azure Blob
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 container_client = blob_service_client.get_container_client("images")
 
 # Initialisation de la base de données SQLAlchemy
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 
 # Modèles pour la base de données
 class Quiz(db.Model):
@@ -60,34 +68,31 @@ def index():
 @app.route('/create-quiz', methods=['GET', 'POST'])
 def create_quiz():
     if request.method == 'POST':
-        # Récupération des données du formulaire
         title = request.form.get('title')
         questions = request.form.getlist('question')
         answers = request.form.getlist('answer')
         images = request.files.getlist('image')
 
-        # Validation des données
         if not title or not questions or not answers:
             return "Formulaire incomplet. Veuillez remplir tous les champs.", 400
 
-        # Création du quiz
         new_quiz = Quiz(title=title)
         db.session.add(new_quiz)
         db.session.commit()
 
-        # Ajout des questions
         for i, (question_text, correct_answer) in enumerate(zip(questions, answers)):
             image_file = images[i] if i < len(images) else None
             image_filename = None
 
-            # Gestion de l'upload de l'image
             if image_file and image_file.filename:
-                blob_name = f"quiz_{new_quiz.id}_q{i}_{image_file.filename}"
-                blob_client = container_client.get_blob_client(blob_name)
-                blob_client.upload_blob(image_file, overwrite=True)
-                image_filename = blob_name 
+                try:
+                    blob_name = f"quiz_{new_quiz.id}_q{i}_{image_file.filename}"
+                    blob_client = container_client.get_blob_client(blob_name)
+                    blob_client.upload_blob(image_file, overwrite=True)
+                    image_filename = blob_name
+                except Exception as e:
+                    return f"Erreur lors de l'upload de l'image {image_file.filename}: {e}", 500
 
-            # Création de la question
             question = Question(
                 quiz_id=new_quiz.id,
                 question_text=question_text,
@@ -99,7 +104,6 @@ def create_quiz():
 
         return redirect(url_for('index'))
 
-    # Affichage du formulaire pour GET
     return render_template('create_quiz.html')
 
 
@@ -119,7 +123,6 @@ def quiz(quiz_id):
             if user_answer and user_answer.strip().lower() == question.correct_answer.strip().lower():
                 score += 1
 
-        # Sauvegarde du score dans la base de données
         new_score = Score(quiz_id=quiz_id, pseudo=pseudo, user_score=score)
         db.session.add(new_score)
         db.session.commit()
@@ -144,6 +147,4 @@ def scores(quiz_id):
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()  # Recrée toutes les tables
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", debug=False)
