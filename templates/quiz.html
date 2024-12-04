@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ quiz.title }}</h2>
+<form method="POST">
+    <div class="form-group">
+        <label for="pseudo">Entrez votre pseudo :</label>
+        <input type="text" id="pseudo" name="pseudo" required>
+    </div>
+    {% for question in questions %}
+    <div class="form-group">
+        <p>{{ question.question_text }}</p>
+        {% if question.image_filename %}
+        <img src="https://quizimages.blob.core.windows.net/images/{{ question.image_filename }}" alt="Image pour la question {{ loop.index }}" style="max-width: 100%; height: auto;">
+        {% endif %}
+        <input type="text" name="{{ question.id }}">
+    </div>
+    {% endfor %}
+    <button type="submit">Soumettre</button>
+</form>
+{% endblock %}

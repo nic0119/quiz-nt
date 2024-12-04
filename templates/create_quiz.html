@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Créer un Quiz</h2>
+<form action="{{ url_for('create_quiz') }}" method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="title">Titre du Quiz :</label>
+        <input type="text" id="title" name="title" required>
+    </div>
+    <div id="questions">
+        <div class="form-group question">
+            <label>Question :</label>
+            <input type="text" name="question" required>
+            <label>Réponse :</label>
+            <input type="text" name="answer" required>
+            <label>Image (optionnel) :</label>
+            <input type="file" name="image">
+        </div>
+    </div>
+    <button type="button" onclick="addQuestion()">Ajouter une question</button>
+    <button type="submit">Créer le quiz</button>
+</form>
+
+<script>
+    function addQuestion() {
+        const questionDiv = document.createElement('div');
+        questionDiv.classList.add('form-group', 'question');
+        questionDiv.innerHTML = `
+            <label>Question :</label>
+            <input type="text" name="question" required>
+            <label>Réponse :</label>
+            <input type="text" name="answer" required>
+            <label>Image (optionnel) :</label>
+            <input type="file" name="image">
+        `;
+        document.getElementById('questions').appendChild(questionDiv);
+    }
+</script>
+
+{% endblock %}

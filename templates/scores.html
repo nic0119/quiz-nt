@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Scores pour {{ quiz.title }}</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Pseudo</th>
+            <th>Score</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for score in scores %}
+        <tr>
+            <td>{{ score.pseudo }}</td>
+            <td>{{ score.user_score }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('index') }}">Retour à l'accueil</a>
+{% endblock %}

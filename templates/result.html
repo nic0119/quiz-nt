@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Résultat</h2>
+<p>Félicitations, {{ pseudo }} !</p>
+<p>Vous avez obtenu un score de {{ score }}.</p>
+<a href="{{ url_for('index') }}">Retour à l'accueil</a>
+{% endblock %}

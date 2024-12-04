@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Liste des Quiz</h2>
+<ul>
+    {% for quiz in quizzes %}
+    <li>
+        <a href="{{ url_for('quiz', quiz_id=quiz.id) }}">{{ quiz.title }}</a>
+        (<a href="{{ url_for('scores', quiz_id=quiz.id) }}">Scores</a>)
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
