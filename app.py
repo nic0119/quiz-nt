@@ -4,29 +4,31 @@ import os
 from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
-
 load_dotenv()
+
 # Initialisation de l'application Flask
 app = Flask(__name__)
 
 # Initialisation de la base de données SQLAlchemy
 db = SQLAlchemy()
 
+
 # Configuration de l'application Flask
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("SQLALCHEMY_DATABASE_URI")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'my_secret_key'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "my_secret_key")
 
 # Configuration pour l'upload des fichiers
 UPLOAD_FOLDER = 'static/images'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Crée le dossier si inexistant
 
-# Configuration environnement azure
+# Configuration environnement Azure Storage
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 container_client = blob_service_client.get_container_client("images")
 
+# Initialisation de SQLAlchemy avec l'application Flask
 db.init_app(app)
 
 # Modèles pour la base de données
