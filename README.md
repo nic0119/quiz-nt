@@ -26,7 +26,9 @@
   - Accédez à votre dossier: cd <nom-de-votre-dossier>
   - Installez les bibliothèques Python nécessaires: pip install -r requirements.txt
   - Configurez un fichier .env avec cette architecture:
+        ```
         SQLALCHEMY_DATABASE_URI=<votre_chaine_de_connection_base_de_donnees>
         AZURE_STORAGE_CONNECTION_STRING=<votre_chaine_de_connection_blob_storage>
         SECRET_KEY=<votre_cle_secrete>
+        ```
   - Lancez l'application localement: python app.py
